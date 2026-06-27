@@ -323,7 +323,7 @@
         </label>
         <label class="modeOption" for="modeAlphabet">
           <input id="modeAlphabet" name="makeMode" type="radio" value="glyph_alphabet" checked />
-          <span>GLYPH ALPHABET<small>英数字・基本記号用。対応表で解読可能。</small></span>
+          <span>GLYPH ALPHABET<small>英数字・基本記号とWeb記号を対応表で解読可能。</small></span>
         </label>
       </div>
 
@@ -332,7 +332,7 @@
 
       <label id="makePasswordLabel" for="makePassword">パスワード</label>
       <input id="makePassword" type="password" autocomplete="new-password" placeholder="復号に必要なパスワード" />
-      <p id="modeHelp" class="hint">ENCRYPT MODE: Japanese input is encrypted data. Password required.</p>
+      <p id="modeHelp" class="hint">GLYPH ALPHABET: Alphanumeric text and basic symbols are readable with the glyph table. Web symbols such as &lt; &gt; [ ] { } \ ^ ` are represented using SYM NEXT extended notation.</p>
 
       <label for="themeSelect">Theme</label>
       <select id="themeSelect">
@@ -358,7 +358,7 @@
       <div id="makeStatus" class="status">まだ生成されていません。</div>
       <details>
         <summary>読み取り条件</summary>
-        <p>ENCRYPT MODEは同じパスワードで復号します。GLYPH ALPHABETは保存PNGからパスワードなしで復元でき、見た目も対応表で読めます。スクリーンショットやカメラ読み取りは実験的です。</p>
+        <p>ENCRYPT MODEは同じパスワードで復号します。GLYPH ALPHABETは保存PNGからパスワードなしで復元でき、見た目も対応表で読めます。&lt; &gt; [ ] { } \ ^ ` などのWeb記号はSYM NEXT拡張表記で対応します。スクリーンショットやカメラ読み取りは実験的です。</p>
       </details>
     </div>
 
@@ -446,13 +446,17 @@
     ['Y',27], ['Z',41], ['0',56], ['1',12], ['2',45], ['3',43], ['4',62], ['5',51],
     ['6',15], ['7',44], ['8',63], ['9',60], ['space',0], ['.',1], [',',2], ['!',3],
     ['?',4], [':',8], [';',10], ["'",11], ['"',13], ['-',14], ['_',16], ['/',17],
-    ['\\',19], ['|',20], ['@',21], ['#',24], ['&',25], ['+',32], ['=',34], ['*',37],
-    ['%',38], ['$',39], ['(',40], [')',46], ['CAP NEXT',47], ['CAPS ON',50],
-    ['LOWER ON',52], ['~',54]
+    ['|',20], ['@',21], ['#',24], ['&',25], ['+',32], ['=',34], ['*',37], ['%',38],
+    ['$',39], ['(',40], [')',46], ['~',54], ['CAP NEXT',47], ['CAPS ON',50],
+    ['LOWER ON',52], ['SYM NEXT',19]
   ];
   const ALPHABET_GLYPH_BY_TOKEN = new Map(ALPHABET_TABLE);
   const ALPHABET_TOKEN_BY_GLYPH = new Map(ALPHABET_TABLE.map(([token, value]) => [value, token]));
-  const ALPHABET_SYMBOLS = new Set(['.', ',', '!', '?', ':', ';', "'", '"', '-', '_', '/', '\\', '|', '@', '#', '&', '+', '=', '*', '%', '$', '(', ')', '~']);
+  const ALPHABET_SYMBOLS = new Set(['.', ',', '!', '?', ':', ';', "'", '"', '-', '_', '/', '|', '@', '#', '&', '+', '=', '*', '%', '$', '(', ')', '~']);
+  const EXTENDED_SYMBOL_TO_TOKEN = new Map([
+    ['<','A'], ['>','B'], ['[','C'], [']','D'], ['{','E'], ['}','F'], ['\\','G'], ['^','H'], ['`','I']
+  ]);
+  const EXTENDED_TOKEN_TO_SYMBOL = new Map(Array.from(EXTENDED_SYMBOL_TO_TOKEN, ([symbol, token]) => [token, symbol]));
 
   let lastDataUrl = '';
   let videoStream = null;
@@ -767,7 +771,7 @@
     $('makePassword').placeholder = alphabet ? 'GLYPH ALPHABETでは使いません' : '復号に必要なパスワード';
     $('plainText').placeholder = alphabet ? 'Hello NASA project.' : 'ここに秘密の文章を書きます';
     $('modeHelp').textContent = alphabet
-      ? 'GLYPH ALPHABET: Alphanumeric input is readable with the glyph table. No password required.'
+      ? 'GLYPH ALPHABET: Alphanumeric text and basic symbols are readable with the glyph table. Web symbols such as < > [ ] { } \\ ^ ` are represented using SYM NEXT extended notation.'
       : 'ENCRYPT MODE: Japanese input is encrypted data. Password required.';
   }
 
@@ -775,6 +779,7 @@
     if(token === 'CAP NEXT') return 'CAP_NEXT';
     if(token === 'CAPS ON') return 'CAPS_ON';
     if(token === 'LOWER ON') return 'LOWER_ON';
+    if(token === 'SYM NEXT') return 'SYM_NEXT';
     return token;
   }
 
@@ -782,6 +787,7 @@
     if(token === 'CAP_NEXT') return 'CAP NEXT';
     if(token === 'CAPS_ON') return 'CAPS ON';
     if(token === 'LOWER_ON') return 'LOWER ON';
+    if(token === 'SYM_NEXT') return 'SYM NEXT';
     return token;
   }
 
@@ -835,10 +841,11 @@
         }
       }else if(ch === ' '){
         pushAlphabetToken(tokens, values, 'space');
+      }else if(EXTENDED_SYMBOL_TO_TOKEN.has(ch)){
+        pushAlphabetToken(tokens, values, 'SYM NEXT');
+        pushAlphabetToken(tokens, values, EXTENDED_SYMBOL_TO_TOKEN.get(ch));
       }else if(ALPHABET_SYMBOLS.has(ch)){
         pushAlphabetToken(tokens, values, ch);
-      }else if(ch === '[' || ch === ']' || ch === '<' || ch === '>'){
-        throw new Error('GLYPH ALPHABET MODEでは [ ] < > は対応表にありません。~ を使ってください。');
       }else if(ch === '\n' || ch === '\r' || ch === '\t'){
         throw new Error('GLYPH ALPHABET MODEでは改行やタブは使えません。spaceで区切ってください。');
       }else{
@@ -849,20 +856,36 @@
   }
 
   function formatAlphabetTokens(tokens){
+    let symNext = false;
     return tokens.map((token) => {
+      if(token === 'SYM NEXT'){
+        symNext = true;
+        return token;
+      }
+      if(symNext){
+        symNext = false;
+        return token;
+      }
       if(/^[A-Z]$/.test(token)) return token.toLowerCase();
       return token;
     }).join(' ');
   }
 
-  function decodeGlyphAlphabetValues(values){
+  function decodeGlyphAlphabetTokens(tokens, tableVersion='alphabet-v2'){
     let uppercase = false;
     let capNext = false;
+    let symNext = false;
     let out = '';
-    for(const value of values){
-      const token = ALPHABET_TOKEN_BY_GLYPH.get(value);
-      if(!token){
-        throw new Error(`未対応のglyph値です: ${value}`);
+    for(const rawToken of tokens){
+      const token = tokenFromStorage(rawToken);
+      if(symNext){
+        const symbol = EXTENDED_TOKEN_TO_SYMBOL.get(token);
+        if(!symbol){
+          throw new Error(`SYM NEXTの後に対応していないglyphです: ${token}`);
+        }
+        out += symbol;
+        symNext = false;
+        continue;
       }
       if(token === 'CAP NEXT'){
         capNext = true;
@@ -878,8 +901,16 @@
         capNext = false;
         continue;
       }
+      if(token === 'SYM NEXT'){
+        symNext = true;
+        continue;
+      }
       if(token === 'space'){
         out += ' ';
+        continue;
+      }
+      if(tableVersion !== 'alphabet-v2' && token === '\\'){
+        out += '\\';
         continue;
       }
       if(/^[A-Z]$/.test(token)){
@@ -889,7 +920,24 @@
       }
       out += token;
     }
+    if(symNext){
+      throw new Error('SYM NEXTの後にglyphがありません。');
+    }
     return out;
+  }
+
+  function decodeGlyphAlphabetValues(values, tableVersion='alphabet-v2'){
+    const tokens = values.map((value) => {
+      if(tableVersion !== 'alphabet-v2' && value === 19){
+        return '\\';
+      }
+      const token = ALPHABET_TOKEN_BY_GLYPH.get(value);
+      if(!token){
+        throw new Error(`未対応のglyph値です: ${value}`);
+      }
+      return token;
+    });
+    return decodeGlyphAlphabetTokens(tokens, tableVersion);
   }
 
   function makeAlphabetMetadata(encoded){
@@ -897,7 +945,7 @@
       type:'glyph-cypher-6seg',
       version:APP_VERSION,
       mode:MODE_ALPHABET,
-      tableVersion:'alphabet-v1',
+      tableVersion:'alphabet-v2',
       data:encoded.tokens.map(storageTokenFor),
       tokens:encoded.tokens,
       values:encoded.values
@@ -924,19 +972,21 @@
 
     const meta = parseJsonPayload(payload);
     if(meta && meta.type === 'glyph-cypher-6seg' && meta.mode === MODE_ALPHABET){
-      let values = Array.isArray(meta.values) ? meta.values.slice() : null;
-      if(!values && Array.isArray(meta.tokens)){
-        values = meta.tokens.map((token) => ALPHABET_GLYPH_BY_TOKEN.get(tokenFromStorage(token)));
+      const tableVersion = meta.tableVersion || 'alphabet-v1';
+      let text = null;
+      if(Array.isArray(meta.tokens)){
+        text = decodeGlyphAlphabetTokens(meta.tokens, tableVersion);
+      }else if(Array.isArray(meta.data)){
+        text = decodeGlyphAlphabetTokens(meta.data, tableVersion);
+      }else if(Array.isArray(meta.values)){
+        text = decodeGlyphAlphabetValues(meta.values.slice(), tableVersion);
       }
-      if(!values && Array.isArray(meta.data)){
-        values = meta.data.map((token) => ALPHABET_GLYPH_BY_TOKEN.get(tokenFromStorage(token)));
-      }
-      if(!values || values.some((value) => typeof value !== 'number')){
+      if(text === null){
         throw new Error('GLYPH ALPHABETのPNGメタデータを読めませんでした。');
       }
       return {
         mode:MODE_ALPHABET,
-        text:decodeGlyphAlphabetValues(values),
+        text,
         status:'GLYPH ALPHABETをパスワードなしで復元しました。'
       };
     }
@@ -1157,8 +1207,8 @@
   function footerLines(mode, theme){
     if(mode === MODE_ALPHABET){
       return theme === THEME_TERMINAL
-        ? ['READABLE WITH GLYPH TABLE  |  NO PASSWORD REQUIRED', 'Alphanumeric input is readable with the glyph table.']
-        : ['GLYPH ALPHABET  |  NO PASSWORD REQUIRED', 'Alphanumeric input is readable with the glyph table.'];
+        ? ['READABLE GLYPH ALPHABET v2  |  NO PASSWORD REQUIRED', 'Web symbols use SYM NEXT extended notation.']
+        : ['GLYPH ALPHABET v2  |  NO PASSWORD REQUIRED', 'Web symbols use SYM NEXT extended notation.'];
     }
     return theme === THEME_TERMINAL
       ? ['ENCRYPTED 6SEG DATA  |  PASSWORD REQUIRED', 'Japanese input is encrypted data. Password required.']
@@ -1606,8 +1656,11 @@
 
   window.__glyphCypherDebug = {
     encodeGlyphAlphabet,
+    decodeGlyphAlphabetTokens,
     decodeGlyphAlphabetValues,
     ALPHABET_TABLE,
+    EXTENDED_SYMBOL_TO_TOKEN,
+    EXTENDED_TOKEN_TO_SYMBOL,
     layoutForValues,
     base64ToBytes,
     extractEmbeddedPayloadFromPng,

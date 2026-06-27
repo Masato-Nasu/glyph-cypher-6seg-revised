@@ -1,4 +1,4 @@
-const CACHE_NAME = 'glyph-cypher-6seg-v0-1-2-preview-sample';
+const CACHE_NAME = 'glyph-cypher-6seg-v0-1-2-alphabet-v2-sym-next';
 const ASSETS = [
   './',
   './index.html',
