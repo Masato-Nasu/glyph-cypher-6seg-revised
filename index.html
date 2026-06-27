@@ -1,0 +1,1627 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <title>GLYPH CYPHER 6SEG</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <style>
+    :root{
+      --bg:#0c0c0d;
+      --panel:#171719;
+      --panel-2:#202024;
+      --ink:#f4f1e8;
+      --muted:#aaa7a1;
+      --line:#323238;
+      --accent:#f4f1e8;
+      --accent-2:#9ccfd8;
+      --danger:#ff9b9b;
+      --ok:#a8f0c5;
+      --warn:#f6d58b;
+      --radius:8px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,#141416 0,#0c0c0d 50%,#080809 100%);
+      color:var(--ink);
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      line-height:1.6;
+    }
+    header{
+      padding:28px 18px 14px;
+      text-align:center;
+    }
+    h1{
+      margin:0;
+      font-size:44px;
+      letter-spacing:0;
+      line-height:1;
+      font-weight:800;
+    }
+    @media (max-width:640px){
+      h1{font-size:32px}
+    }
+    .sub{
+      margin:12px auto 0;
+      max-width:760px;
+      color:var(--muted);
+      font-size:14px;
+    }
+    main{
+      width:min(1120px,100%);
+      margin:0 auto;
+      padding:10px 14px 40px;
+      display:grid;
+      grid-template-columns:420px 1fr;
+      gap:14px;
+    }
+    @media (max-width:900px){
+      main{grid-template-columns:1fr}
+    }
+    section{
+      background:rgba(23,23,25,.95);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:16px;
+      box-shadow:0 18px 50px rgba(0,0,0,.28);
+    }
+    h2{
+      margin:0 0 10px;
+      font-size:18px;
+      letter-spacing:0;
+    }
+    label{
+      display:block;
+      margin:12px 0 6px;
+      color:#ddd9cf;
+      font-size:13px;
+      font-weight:700;
+    }
+    textarea,
+    input[type="password"],
+    input[type="text"],
+    select{
+      width:100%;
+      border:1px solid #38383e;
+      background:#0e0e10;
+      color:var(--ink);
+      border-radius:var(--radius);
+      padding:12px;
+      font:inherit;
+      outline:none;
+    }
+    textarea{
+      min-height:170px;
+      resize:vertical;
+    }
+    input[type="file"]{
+      width:100%;
+      padding:12px;
+      border:1px dashed #4a4a52;
+      border-radius:var(--radius);
+      background:#101013;
+      color:var(--muted);
+    }
+    button,
+    .btn{
+      appearance:none;
+      border:0;
+      border-radius:var(--radius);
+      padding:12px 16px;
+      background:var(--accent);
+      color:#09090a;
+      font-weight:800;
+      font-size:14px;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      min-height:44px;
+    }
+    button.secondary,
+    .btn.secondary{
+      background:#29292f;
+      color:var(--ink);
+      border:1px solid #3a3a42;
+    }
+    button.danger{
+      background:#3a2020;
+      color:#ffd4d4;
+      border:1px solid #5b3030;
+    }
+    button:disabled,
+    .btn.disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      pointer-events:none;
+    }
+    .row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .hint{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:8px;
+    }
+    .subhead{
+      margin:18px 0 8px;
+      font-size:15px;
+      letter-spacing:0;
+    }
+    .status{
+      margin-top:12px;
+      padding:10px 12px;
+      border-radius:var(--radius);
+      background:#111114;
+      border:1px solid #2d2d33;
+      color:var(--muted);
+      font-size:13px;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    .status.ok{
+      color:var(--ok);
+      border-color:#244632;
+      background:#0d1c13;
+    }
+    .status.err{
+      color:var(--danger);
+      border-color:#563232;
+      background:#211010;
+    }
+    .status.warn{
+      color:var(--warn);
+      border-color:#574a25;
+      background:#211b0d;
+    }
+    .previewWrap{
+      width:100%;
+      overflow:auto;
+      background:#0e0e10;
+      border:1px solid #303036;
+      border-radius:var(--radius);
+      padding:12px;
+      min-height:360px;
+    }
+    canvas#glyphCanvas{
+      display:block;
+      width:100%;
+      max-width:1080px;
+      height:auto;
+      margin:0 auto;
+      background:#f4f1e8;
+      border-radius:6px;
+    }
+    video{
+      width:100%;
+      border-radius:var(--radius);
+      background:#000;
+      margin-top:10px;
+      display:none;
+    }
+    .resultText{
+      min-height:100px;
+      white-space:pre-wrap;
+      word-break:break-word;
+      background:#0e0e10;
+      border:1px solid #38383e;
+      border-radius:var(--radius);
+      padding:12px;
+      margin-top:10px;
+    }
+    details{
+      margin-top:12px;
+      color:var(--muted);
+      font-size:13px;
+    }
+    summary{
+      cursor:pointer;
+      color:#e8e2d6;
+      font-weight:700;
+    }
+    .tabs{
+      display:flex;
+      gap:8px;
+      margin-bottom:12px;
+    }
+    .tabs button{
+      flex:1;
+      background:#26262b;
+      color:var(--ink);
+      border:1px solid #3a3a42;
+    }
+    .tabs button.active{
+      background:var(--ink);
+      color:#09090a;
+    }
+    .tabPanel{display:none}
+    .tabPanel.active{display:block}
+    .modeControls{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:8px;
+    }
+    .modeOption{
+      margin:0;
+      display:block;
+      min-width:0;
+    }
+    .modeOption input{
+      position:absolute;
+      opacity:0;
+      pointer-events:none;
+    }
+    .modeOption span{
+      display:block;
+      min-height:48px;
+      border:1px solid #3a3a42;
+      border-radius:var(--radius);
+      background:#242429;
+      color:var(--ink);
+      padding:10px 12px;
+      font-size:13px;
+      font-weight:800;
+      line-height:1.2;
+    }
+    .modeOption input:checked + span{
+      background:var(--ink);
+      border-color:var(--ink);
+      color:#09090a;
+    }
+    .modeOption small{
+      display:block;
+      margin-top:4px;
+      font-size:11px;
+      font-weight:600;
+      line-height:1.25;
+      opacity:.72;
+    }
+    .modeOption input:focus-visible + span,
+    select:focus-visible{
+      outline:2px solid var(--accent-2);
+      outline-offset:2px;
+    }
+    .smallGrid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width:520px){
+      .smallGrid,
+      .modeControls{grid-template-columns:1fr}
+      button,.btn{width:100%}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>GLYPH CYPHER</h1>
+  <p class="sub">日本語はパスワード必須の暗号として、英数字・基本記号は対応表で解読できるglyph alphabetとして、6セグメント画像に保存できます。</p>
+</header>
+<main>
+  <section>
+    <div class="tabs" role="tablist" aria-label="操作">
+      <button id="tabMake" class="active" type="button" role="tab" aria-selected="true" aria-controls="makePanel">作る</button>
+      <button id="tabRead" type="button" role="tab" aria-selected="false" aria-controls="readPanel">読む</button>
+    </div>
+
+    <div id="makePanel" class="tabPanel active" role="tabpanel" aria-labelledby="tabMake">
+      <h2>glyph画像を作る</h2>
+      <label>モード</label>
+      <div class="modeControls" role="radiogroup" aria-label="生成モード">
+        <label class="modeOption" for="modeEncrypt">
+          <input id="modeEncrypt" name="makeMode" type="radio" value="encrypted" />
+          <span>ENCRYPT MODE<small>日本語対応。暗号化・パスワード必須。</small></span>
+        </label>
+        <label class="modeOption" for="modeAlphabet">
+          <input id="modeAlphabet" name="makeMode" type="radio" value="glyph_alphabet" checked />
+          <span>GLYPH ALPHABET<small>英数字・基本記号用。対応表で解読可能。</small></span>
+        </label>
+      </div>
+
+      <label for="plainText">本文</label>
+      <textarea id="plainText" placeholder="ここに秘密の文章を書きます">Nemunoki no Arite hinemosu Sanzu nite.</textarea>
+
+      <label id="makePasswordLabel" for="makePassword">パスワード</label>
+      <input id="makePassword" type="password" autocomplete="new-password" placeholder="復号に必要なパスワード" />
+      <p id="modeHelp" class="hint">ENCRYPT MODE: Japanese input is encrypted data. Password required.</p>
+
+      <label for="themeSelect">Theme</label>
+      <select id="themeSelect">
+        <option value="manuscript">Manuscript</option>
+        <option value="terminal">Terminal</option>
+      </select>
+
+      <div class="smallGrid">
+        <div>
+          <label for="titleText">表題</label>
+          <input id="titleText" type="text" value="SECRET MANUSCRIPT" />
+        </div>
+        <div>
+          <label for="noteText">注記</label>
+          <input id="noteText" type="text" value="GLYPH CYPHER 6SEG v0.1.2" />
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="makeBtn" type="button">glyph画像を生成</button>
+        <button id="demoBtn" class="secondary" type="button">サンプル入力</button>
+      </div>
+      <div id="makeStatus" class="status">まだ生成されていません。</div>
+      <details>
+        <summary>読み取り条件</summary>
+        <p>ENCRYPT MODEは同じパスワードで復号します。GLYPH ALPHABETは保存PNGからパスワードなしで復元でき、見た目も対応表で読めます。スクリーンショットやカメラ読み取りは実験的です。</p>
+      </details>
+    </div>
+
+    <div id="readPanel" class="tabPanel" role="tabpanel" aria-labelledby="tabRead">
+      <h2>glyph画像を読む</h2>
+      <label for="readPassword">パスワード</label>
+      <input id="readPassword" type="password" autocomplete="current-password" placeholder="ENCRYPT MODEのみ必要" />
+
+      <label for="imageFile">PNG / JPG / WebP / スクリーンショット</label>
+      <input id="imageFile" type="file" accept="image/png,image/jpeg,image/webp" />
+
+      <div class="row">
+        <button id="decodeFileBtn" type="button">画像から復号</button>
+        <button id="cameraBtn" class="secondary" type="button">カメラ起動</button>
+        <button id="captureBtn" class="secondary" type="button" disabled>撮影して復号</button>
+      </div>
+      <video id="video" playsinline muted></video>
+      <div id="readStatus" class="status">画像を選ぶか、カメラで撮影してください。</div>
+      <label>復号結果</label>
+      <div id="resultText" class="resultText"></div>
+      <div class="row">
+        <button id="copyResultBtn" class="secondary" type="button">結果をコピー</button>
+        <button id="clearResultBtn" class="danger" type="button">消去</button>
+      </div>
+      <details>
+        <summary>読めないとき</summary>
+        <p>ENCRYPT MODEはパスワードが同じか確認してください。GLYPH ALPHABETはパスワード不要ですが、元テキスト復元にはこのアプリでPNG保存した画像が最も安定します。</p>
+      </details>
+    </div>
+  </section>
+
+  <section>
+    <h2>生成画像</h2>
+    <div class="previewWrap">
+      <canvas id="glyphCanvas" width="1080" height="900"></canvas>
+    </div>
+    <div class="row">
+      <a id="downloadPng" class="btn disabled" href="#" download="glyph-cypher.png" aria-disabled="true">PNG保存</a>
+      <button id="printBtn" class="secondary" type="button" disabled>印刷</button>
+    </div>
+    <p class="hint">PNG保存した画像は、そのまま復号に使えます。画面撮影よりも、まずPNG保存した画像からの復号が安定します。</p>
+    <h3 class="subhead">換字表</h3>
+    <div class="row">
+      <a class="btn secondary" href="./glyph_alphabet_substitution_table_v0.1.2.png" download>Manuscript版</a>
+      <a class="btn secondary" href="./glyph_alphabet_substitution_table_terminal_v0.1.2.png" download>Terminal版</a>
+      <a class="btn secondary" href="./glyph_alphabet_substitution_table_v0.1.2.csv" download>CSV</a>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const enc = new TextEncoder();
+  const dec = new TextDecoder();
+
+  const APP_VERSION = '0.1.2';
+  const MODE_ENCRYPT = 'encrypted';
+  const MODE_ALPHABET = 'glyph_alphabet';
+  const THEME_MANUSCRIPT = 'manuscript';
+  const THEME_TERMINAL = 'terminal';
+
+  const CANVAS_W = 1080;
+  const GRID_COLS = 36;
+  const BASE_LEFT = 58;
+  const BASE_TOP = 162;
+  const BASE_CELL_W = 25;
+  const BASE_CELL_H = 34;
+  const BASE_BOTTOM = 106;
+  const MAX_ROWS = 360;
+  const MARKER_SIZE = 54;
+  const MARKER_INSET = 60;
+  const MARKER_SAFE = 34;
+  const SEGMENTS = ['T','UL','UR','LL','LR','B'];
+  const PBKDF2_ITER = 160000;
+  const PNG_PAYLOAD_CHUNK = 'gcYP';
+  const DEFAULT_PREVIEW_TEXT = 'Nemunoki no Arite hinemosu Sanzu nite.';
+
+  const ALPHABET_TABLE = [
+    ['A',58], ['B',23], ['C',53], ['D',42], ['E',49], ['F',48], ['G',55], ['H',22],
+    ['I',33], ['J',9], ['K',28], ['L',5], ['M',26], ['N',18], ['O',57], ['P',61],
+    ['Q',59], ['R',29], ['S',35], ['T',36], ['U',7], ['V',6], ['W',31], ['X',30],
+    ['Y',27], ['Z',41], ['0',56], ['1',12], ['2',45], ['3',43], ['4',62], ['5',51],
+    ['6',15], ['7',44], ['8',63], ['9',60], ['space',0], ['.',1], [',',2], ['!',3],
+    ['?',4], [':',8], [';',10], ["'",11], ['"',13], ['-',14], ['_',16], ['/',17],
+    ['\\',19], ['|',20], ['@',21], ['#',24], ['&',25], ['+',32], ['=',34], ['*',37],
+    ['%',38], ['$',39], ['(',40], [')',46], ['CAP NEXT',47], ['CAPS ON',50],
+    ['LOWER ON',52], ['~',54]
+  ];
+  const ALPHABET_GLYPH_BY_TOKEN = new Map(ALPHABET_TABLE);
+  const ALPHABET_TOKEN_BY_GLYPH = new Map(ALPHABET_TABLE.map(([token, value]) => [value, token]));
+  const ALPHABET_SYMBOLS = new Set(['.', ',', '!', '?', ':', ';', "'", '"', '-', '_', '/', '\\', '|', '@', '#', '&', '+', '=', '*', '%', '$', '(', ')', '~']);
+
+  let lastDataUrl = '';
+  let videoStream = null;
+  let lastDefaultLabels = { title:'SECRET MANUSCRIPT', note:`GLYPH CYPHER 6SEG v${APP_VERSION}` };
+
+  const glyphCanvas = $('glyphCanvas');
+  const gctx = glyphCanvas.getContext('2d', { willReadFrequently: true });
+
+  function setStatus(el, text, type=''){
+    el.textContent = text;
+    el.className = 'status' + (type ? ' ' + type : '');
+  }
+
+  function setDownloadReady(ready){
+    $('downloadPng').classList.toggle('disabled', !ready);
+    $('downloadPng').setAttribute('aria-disabled', ready ? 'false' : 'true');
+    $('printBtn').disabled = !ready;
+  }
+
+  function u32be(n){
+    return new Uint8Array([(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255]);
+  }
+
+  function readU32be(a, i){
+    return ((a[i]<<24)>>>0) + (a[i+1]<<16) + (a[i+2]<<8) + a[i+3];
+  }
+
+  function concatBytes(parts){
+    const total = parts.reduce((n,p)=>n+p.length,0);
+    const out = new Uint8Array(total);
+    let off = 0;
+    for(const p of parts){
+      out.set(p, off);
+      off += p.length;
+    }
+    return out;
+  }
+
+  function ascii(s){
+    return enc.encode(s);
+  }
+
+  const crcTable = (() => {
+    const table = new Uint32Array(256);
+    for(let i=0;i<256;i++){
+      let c=i;
+      for(let k=0;k<8;k++){
+        c = (c&1) ? (0xedb88320 ^ (c>>>1)) : (c>>>1);
+      }
+      table[i]=c>>>0;
+    }
+    return table;
+  })();
+
+  function crc32(bytes){
+    let c = 0xffffffff;
+    for(const b of bytes){
+      c = crcTable[(c ^ b) & 255] ^ (c >>> 8);
+    }
+    return (c ^ 0xffffffff) >>> 0;
+  }
+
+  async function deriveKey(password, salt){
+    const baseKey = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name:'PBKDF2', salt, iterations:PBKDF2_ITER, hash:'SHA-256' },
+      baseKey,
+      { name:'AES-GCM', length:256 },
+      false,
+      ['encrypt','decrypt']
+    );
+  }
+
+  async function encryptText(text, password){
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveKey(password, salt);
+    const cipher = new Uint8Array(await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, enc.encode(text)));
+    return concatBytes([
+      ascii('FSC1'),
+      new Uint8Array([1]),
+      u32be(PBKDF2_ITER),
+      salt,
+      iv,
+      cipher
+    ]);
+  }
+
+  async function decryptPayload(payload, password){
+    if(!password){
+      throw new Error('ENCRYPT MODEのPNGです。パスワードを入力してください。');
+    }
+    if(payload.length < 4+1+4+16+12+16){
+      throw new Error('暗号データが短すぎます。');
+    }
+    if(dec.decode(payload.slice(0,4)) !== 'FSC1'){
+      throw new Error('FSC1ヘッダーが見つかりません。');
+    }
+    const version = payload[4];
+    if(version !== 1){
+      throw new Error('未対応の暗号データ形式です。');
+    }
+    const iter = readU32be(payload, 5);
+    if(iter !== PBKDF2_ITER){
+      console.warn('Different iteration count:', iter);
+    }
+    const salt = payload.slice(9,25);
+    const iv = payload.slice(25,37);
+    const cipher = payload.slice(37);
+    const key = await deriveKey(password, salt);
+    try{
+      const plain = await crypto.subtle.decrypt({ name:'AES-GCM', iv }, key, cipher);
+      return dec.decode(new Uint8Array(plain));
+    }catch(e){
+      throw new Error('復号できませんでした。パスワードまたは画像が違う可能性があります。');
+    }
+  }
+
+  function wrapPayload(payload){
+    const crc = u32be(crc32(payload));
+    return concatBytes([ascii('GLYP'), new Uint8Array([1]), u32be(payload.length), payload, crc]);
+  }
+
+  function unwrapPayload(bytes){
+    if(bytes.length < 13){
+      throw new Error('画像内データが短すぎます。');
+    }
+    if(dec.decode(bytes.slice(0,4)) !== 'GLYP'){
+      throw new Error('GLYPヘッダーが見つかりません。生成画像全体が入っているか確認してください。');
+    }
+    if(bytes[4] !== 1){
+      throw new Error('未対応の画像フォーマットです。');
+    }
+    const len = readU32be(bytes, 5);
+    const start = 9;
+    const end = start + len;
+    if(bytes.length < end + 4){
+      throw new Error('画像内データが途中で切れています。');
+    }
+    const payload = bytes.slice(start, end);
+    const stored = readU32be(bytes, end);
+    const actual = crc32(payload);
+    if(stored !== actual){
+      throw new Error('チェックサムが一致しません。画像の読み取りに失敗した可能性があります。');
+    }
+    return payload;
+  }
+
+  function bytesToBase64(bytes){
+    let bin = '';
+    const step = 0x8000;
+    for(let i=0;i<bytes.length;i+=step){
+      bin += String.fromCharCode(...bytes.subarray(i, i + step));
+    }
+    return btoa(bin);
+  }
+
+  function base64ToBytes(base64){
+    const bin = atob(base64);
+    const out = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++){
+      out[i] = bin.charCodeAt(i);
+    }
+    return out;
+  }
+
+  function isPngBytes(bytes){
+    return bytes.length > 8 &&
+      bytes[0] === 137 && bytes[1] === 80 && bytes[2] === 78 && bytes[3] === 71 &&
+      bytes[4] === 13 && bytes[5] === 10 && bytes[6] === 26 && bytes[7] === 10;
+  }
+
+  function chunkType(bytes, pos){
+    return String.fromCharCode(bytes[pos], bytes[pos+1], bytes[pos+2], bytes[pos+3]);
+  }
+
+  function createPngChunk(type, data){
+    const typeBytes = ascii(type);
+    const crc = u32be(crc32(concatBytes([typeBytes, data])));
+    return concatBytes([u32be(data.length), typeBytes, data, crc]);
+  }
+
+  function embedPayloadInPngDataUrl(dataUrl, wrapped){
+    const comma = dataUrl.indexOf(',');
+    if(!dataUrl.startsWith('data:image/png') || comma < 0) return dataUrl;
+    const bytes = base64ToBytes(dataUrl.slice(comma + 1));
+    if(!isPngBytes(bytes)) return dataUrl;
+
+    const chunk = createPngChunk(PNG_PAYLOAD_CHUNK, wrapped);
+    let pos = 8;
+    while(pos + 12 <= bytes.length){
+      const len = readU32be(bytes, pos);
+      const type = chunkType(bytes, pos + 4);
+      const next = pos + 12 + len;
+      if(next > bytes.length) break;
+      if(type === 'IHDR'){
+        const out = new Uint8Array(bytes.length + chunk.length);
+        out.set(bytes.subarray(0, next), 0);
+        out.set(chunk, next);
+        out.set(bytes.subarray(next), next + chunk.length);
+        return 'data:image/png;base64,' + bytesToBase64(out);
+      }
+      if(type === 'IEND'){
+        const out = new Uint8Array(bytes.length + chunk.length);
+        out.set(bytes.subarray(0, pos), 0);
+        out.set(chunk, pos);
+        out.set(bytes.subarray(pos), pos + chunk.length);
+        return 'data:image/png;base64,' + bytesToBase64(out);
+      }
+      pos = next;
+    }
+    return dataUrl;
+  }
+
+  function extractEmbeddedPayloadFromPng(bytes){
+    if(!isPngBytes(bytes)) return null;
+    let pos = 8;
+    while(pos + 12 <= bytes.length){
+      const len = readU32be(bytes, pos);
+      const typeStart = pos + 4;
+      const dataStart = pos + 8;
+      const dataEnd = dataStart + len;
+      const next = dataEnd + 4;
+      if(next > bytes.length) return null;
+      const type = chunkType(bytes, typeStart);
+      if(type === PNG_PAYLOAD_CHUNK){
+        const data = bytes.slice(dataStart, dataEnd);
+        const stored = readU32be(bytes, dataEnd);
+        const actual = crc32(concatBytes([bytes.slice(typeStart, dataStart), data]));
+        if(stored !== actual){
+          throw new Error('PNG内の復号データが破損しています。');
+        }
+        return data;
+      }
+      if(type === 'IEND') break;
+      pos = next;
+    }
+    return null;
+  }
+
+  function bytesToSix(bytes){
+    const values = [];
+    let buf = 0;
+    let bits = 0;
+    for(const b of bytes){
+      buf = (buf << 8) | b;
+      bits += 8;
+      while(bits >= 6){
+        bits -= 6;
+        values.push((buf >>> bits) & 63);
+      }
+    }
+    if(bits > 0){
+      values.push((buf << (6-bits)) & 63);
+    }
+    return values;
+  }
+
+  function sixToBytes(values){
+    const out = [];
+    let buf = 0;
+    let bits = 0;
+    for(const v of values){
+      buf = (buf << 6) | (v & 63);
+      bits += 6;
+      while(bits >= 8){
+        bits -= 8;
+        out.push((buf >>> bits) & 255);
+      }
+    }
+    return new Uint8Array(out);
+  }
+
+  function currentMode(){
+    const checked = document.querySelector('input[name="makeMode"]:checked');
+    return checked ? checked.value : MODE_ENCRYPT;
+  }
+
+  function currentTheme(){
+    return $('themeSelect').value || THEME_MANUSCRIPT;
+  }
+
+  function defaultTitleFor(mode, theme){
+    if(theme === THEME_TERMINAL){
+      return mode === MODE_ALPHABET ? 'GLYPH TRANSMISSION' : 'SECRET TRANSMISSION';
+    }
+    return mode === MODE_ALPHABET ? 'GLYPH ALPHABET' : 'SECRET MANUSCRIPT';
+  }
+
+  function defaultNote(){
+    return `GLYPH CYPHER 6SEG v${APP_VERSION}`;
+  }
+
+  function applyModeUi(){
+    const mode = currentMode();
+    const theme = currentTheme();
+    const nextDefaults = { title:defaultTitleFor(mode, theme), note:defaultNote() };
+    if(!$('titleText').value.trim() || $('titleText').value === lastDefaultLabels.title){
+      $('titleText').value = nextDefaults.title;
+    }
+    if(!$('noteText').value.trim() || $('noteText').value === lastDefaultLabels.note){
+      $('noteText').value = nextDefaults.note;
+    }
+    lastDefaultLabels = nextDefaults;
+
+    const alphabet = mode === MODE_ALPHABET;
+    $('makePassword').disabled = alphabet;
+    if(alphabet){
+      $('makePassword').value = '';
+    }
+    $('makePasswordLabel').textContent = alphabet ? 'パスワード（不要）' : 'パスワード';
+    $('makePassword').placeholder = alphabet ? 'GLYPH ALPHABETでは使いません' : '復号に必要なパスワード';
+    $('plainText').placeholder = alphabet ? 'Hello NASA project.' : 'ここに秘密の文章を書きます';
+    $('modeHelp').textContent = alphabet
+      ? 'GLYPH ALPHABET: Alphanumeric input is readable with the glyph table. No password required.'
+      : 'ENCRYPT MODE: Japanese input is encrypted data. Password required.';
+  }
+
+  function storageTokenFor(token){
+    if(token === 'CAP NEXT') return 'CAP_NEXT';
+    if(token === 'CAPS ON') return 'CAPS_ON';
+    if(token === 'LOWER ON') return 'LOWER_ON';
+    return token;
+  }
+
+  function tokenFromStorage(token){
+    if(token === 'CAP_NEXT') return 'CAP NEXT';
+    if(token === 'CAPS_ON') return 'CAPS ON';
+    if(token === 'LOWER_ON') return 'LOWER ON';
+    return token;
+  }
+
+  function isAsciiLetter(ch){
+    return /^[A-Za-z]$/.test(ch);
+  }
+
+  function isUpperLetter(ch){
+    return /^[A-Z]$/.test(ch);
+  }
+
+  function uppercaseRunLength(text, index){
+    let n = 0;
+    for(let i=index;i<text.length;i++){
+      if(!isUpperLetter(text[i])) break;
+      n++;
+    }
+    return n;
+  }
+
+  function pushAlphabetToken(tokens, values, token){
+    const value = ALPHABET_GLYPH_BY_TOKEN.get(token);
+    if(value === undefined){
+      throw new Error(`対応表にない記号です: ${token}`);
+    }
+    tokens.push(token);
+    values.push(value);
+  }
+
+  function encodeGlyphAlphabet(text){
+    const tokens = [];
+    const values = [];
+    for(let i=0;i<text.length;i++){
+      const ch = text[i];
+      if(isAsciiLetter(ch)){
+        if(isUpperLetter(ch)){
+          const run = uppercaseRunLength(text, i);
+          if(run >= 2){
+            pushAlphabetToken(tokens, values, 'CAPS ON');
+            for(let j=0;j<run;j++){
+              pushAlphabetToken(tokens, values, text[i+j].toUpperCase());
+            }
+            pushAlphabetToken(tokens, values, 'LOWER ON');
+            i += run - 1;
+          }else{
+            pushAlphabetToken(tokens, values, 'CAP NEXT');
+            pushAlphabetToken(tokens, values, ch.toUpperCase());
+          }
+        }else{
+          pushAlphabetToken(tokens, values, ch.toUpperCase());
+        }
+      }else if(ch === ' '){
+        pushAlphabetToken(tokens, values, 'space');
+      }else if(ALPHABET_SYMBOLS.has(ch)){
+        pushAlphabetToken(tokens, values, ch);
+      }else if(ch === '[' || ch === ']' || ch === '<' || ch === '>'){
+        throw new Error('GLYPH ALPHABET MODEでは [ ] < > は対応表にありません。~ を使ってください。');
+      }else if(ch === '\n' || ch === '\r' || ch === '\t'){
+        throw new Error('GLYPH ALPHABET MODEでは改行やタブは使えません。spaceで区切ってください。');
+      }else{
+        throw new Error(`GLYPH ALPHABET MODEで使えない文字です: ${ch}`);
+      }
+    }
+    return { tokens, values };
+  }
+
+  function formatAlphabetTokens(tokens){
+    return tokens.map((token) => {
+      if(/^[A-Z]$/.test(token)) return token.toLowerCase();
+      return token;
+    }).join(' ');
+  }
+
+  function decodeGlyphAlphabetValues(values){
+    let uppercase = false;
+    let capNext = false;
+    let out = '';
+    for(const value of values){
+      const token = ALPHABET_TOKEN_BY_GLYPH.get(value);
+      if(!token){
+        throw new Error(`未対応のglyph値です: ${value}`);
+      }
+      if(token === 'CAP NEXT'){
+        capNext = true;
+        continue;
+      }
+      if(token === 'CAPS ON'){
+        uppercase = true;
+        capNext = false;
+        continue;
+      }
+      if(token === 'LOWER ON'){
+        uppercase = false;
+        capNext = false;
+        continue;
+      }
+      if(token === 'space'){
+        out += ' ';
+        continue;
+      }
+      if(/^[A-Z]$/.test(token)){
+        out += (uppercase || capNext) ? token : token.toLowerCase();
+        capNext = false;
+        continue;
+      }
+      out += token;
+    }
+    return out;
+  }
+
+  function makeAlphabetMetadata(encoded){
+    return {
+      type:'glyph-cypher-6seg',
+      version:APP_VERSION,
+      mode:MODE_ALPHABET,
+      tableVersion:'alphabet-v1',
+      data:encoded.tokens.map(storageTokenFor),
+      tokens:encoded.tokens,
+      values:encoded.values
+    };
+  }
+
+  function parseJsonPayload(payload){
+    try{
+      const text = dec.decode(payload);
+      return JSON.parse(text);
+    }catch(e){
+      return null;
+    }
+  }
+
+  async function decodePayloadByMode(payload, password){
+    if(dec.decode(payload.slice(0,4)) === 'FSC1'){
+      return {
+        mode:MODE_ENCRYPT,
+        text:await decryptPayload(payload, password),
+        status:'ENCRYPT MODEの暗号データを復号しました。'
+      };
+    }
+
+    const meta = parseJsonPayload(payload);
+    if(meta && meta.type === 'glyph-cypher-6seg' && meta.mode === MODE_ALPHABET){
+      let values = Array.isArray(meta.values) ? meta.values.slice() : null;
+      if(!values && Array.isArray(meta.tokens)){
+        values = meta.tokens.map((token) => ALPHABET_GLYPH_BY_TOKEN.get(tokenFromStorage(token)));
+      }
+      if(!values && Array.isArray(meta.data)){
+        values = meta.data.map((token) => ALPHABET_GLYPH_BY_TOKEN.get(tokenFromStorage(token)));
+      }
+      if(!values || values.some((value) => typeof value !== 'number')){
+        throw new Error('GLYPH ALPHABETのPNGメタデータを読めませんでした。');
+      }
+      return {
+        mode:MODE_ALPHABET,
+        text:decodeGlyphAlphabetValues(values),
+        status:'GLYPH ALPHABETをパスワードなしで復元しました。'
+      };
+    }
+
+    throw new Error('未対応のglyphデータ形式です。');
+  }
+
+  async function decodeWrappedPayload(wrapped, password){
+    return decodePayloadByMode(unwrapPayload(wrapped), password);
+  }
+
+  function rect(x, y, w, h){
+    return { x, y, w, h };
+  }
+
+  function expandRect(r, pad){
+    return rect(r.x - pad, r.y - pad, r.w + pad * 2, r.h + pad * 2);
+  }
+
+  function intersects(a, b){
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  }
+
+  function markerRectsForHeight(height){
+    return [
+      rect(MARKER_INSET, MARKER_INSET, MARKER_SIZE, MARKER_SIZE),
+      rect(CANVAS_W - MARKER_INSET - MARKER_SIZE, MARKER_INSET, MARKER_SIZE, MARKER_SIZE),
+      rect(MARKER_INSET, height - MARKER_INSET - MARKER_SIZE, MARKER_SIZE, MARKER_SIZE),
+      rect(CANVAS_W - MARKER_INSET - MARKER_SIZE, height - MARKER_INSET - MARKER_SIZE, MARKER_SIZE, MARKER_SIZE)
+    ];
+  }
+
+  function layoutForRows(rows){
+    const height = BASE_TOP + rows * BASE_CELL_H + BASE_BOTTOM;
+    const markerRects = markerRectsForHeight(height);
+    const markerSafeRects = markerRects.map((r) => expandRect(r, MARKER_SAFE));
+    const headerRect = rect(32, 32, CANVAS_W - 64, BASE_TOP - 48);
+    const bodyRect = rect(BASE_LEFT, BASE_TOP, GRID_COLS * BASE_CELL_W, rows * BASE_CELL_H);
+    const footerRect = rect(BASE_LEFT, height - 96, GRID_COLS * BASE_CELL_W, 56);
+    const forbidden = markerSafeRects.concat([footerRect]);
+    const cells = [];
+
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<GRID_COLS;c++){
+        const cell = rect(BASE_LEFT + c * BASE_CELL_W, BASE_TOP + r * BASE_CELL_H, BASE_CELL_W, BASE_CELL_H);
+        if(forbidden.some((zone) => intersects(cell, zone))) continue;
+        cells.push({ ...cell, row:r, col:c });
+      }
+    }
+    return { height, rows, headerRect, bodyRect, footerRect, markerRects, markerSafeRects, cells };
+  }
+
+  function layoutForValues(valueCount){
+    let rows = Math.max(1, Math.ceil(valueCount / GRID_COLS));
+    while(rows <= MAX_ROWS){
+      const layout = layoutForRows(rows);
+      if(layout.cells.length >= valueCount){
+        return layout;
+      }
+      rows++;
+    }
+    throw new Error('入りきりません。本文を短くするか、分割してください。');
+  }
+
+  function paletteFor(theme){
+    if(theme === THEME_TERMINAL){
+      return {
+        bg:'#020604',
+        paper:'#020604',
+        ink:'#77ff2f',
+        border:'#65f52a',
+        grid:'rgba(101,245,42,.22)',
+        finder:'#65f52a',
+        finderHole:'#020604',
+        footer:'#9cff67',
+        shadow:'rgba(101,255,42,.85)',
+        noise:false,
+        scanlines:true
+      };
+    }
+    return {
+      bg:'#f4f1e8',
+      paper:'#f4f1e8',
+      ink:'#111111',
+      border:'#111111',
+      grid:'rgba(17,17,17,.14)',
+      finder:'#111111',
+      finderHole:'#f4f1e8',
+      footer:'#111111',
+      shadow:'transparent',
+      noise:true,
+      scanlines:false
+    };
+  }
+
+  function drawBackground(ctx, layout, palette){
+    ctx.fillStyle = palette.bg;
+    ctx.fillRect(0, 0, CANVAS_W, layout.height);
+    if(palette.noise){
+      const img = ctx.getImageData(0, 0, CANVAS_W, layout.height);
+      for(let i=0;i<img.data.length;i+=4){
+        const n = Math.floor((Math.random()-.5)*10);
+        img.data[i] = Math.max(0, Math.min(255, img.data[i] + n));
+        img.data[i+1] = Math.max(0, Math.min(255, img.data[i+1] + n));
+        img.data[i+2] = Math.max(0, Math.min(255, img.data[i+2] + n));
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+    if(palette.scanlines){
+      ctx.save();
+      ctx.globalAlpha = .16;
+      ctx.fillStyle = '#153d12';
+      for(let y=0;y<layout.height;y+=5){
+        ctx.fillRect(0, y, CANVAS_W, 1);
+      }
+      ctx.restore();
+    }
+  }
+
+  function withGlow(ctx, palette, fn){
+    ctx.save();
+    if(palette.shadow !== 'transparent'){
+      ctx.shadowColor = palette.shadow;
+      ctx.shadowBlur = 10;
+    }
+    fn();
+    ctx.restore();
+  }
+
+  function drawFinder(ctx, x, y, size, palette){
+    ctx.save();
+    if(palette.shadow !== 'transparent'){
+      ctx.shadowColor = palette.shadow;
+      ctx.shadowBlur = 12;
+    }
+    ctx.fillStyle = palette.finder;
+    ctx.fillRect(x, y, size, size);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = palette.finderHole;
+    ctx.fillRect(x+size*.18, y+size*.18, size*.64, size*.64);
+    ctx.fillStyle = palette.finder;
+    ctx.fillRect(x+size*.34, y+size*.34, size*.32, size*.32);
+    ctx.restore();
+  }
+
+  function patternFromValue(value){
+    return (value & 63).toString(2).padStart(6, '0');
+  }
+
+  function segmentLine(x, y, w, h, seg){
+    switch(seg){
+      case 'T': return [x + w * 0.30, y + h * 0.15, x + w * 0.70, y + h * 0.15];
+      case 'UL': return [x + w * 0.14, y + h * 0.20, x + w * 0.41, y + h * 0.42];
+      case 'UR': return [x + w * 0.86, y + h * 0.20, x + w * 0.59, y + h * 0.42];
+      case 'LL': return [x + w * 0.14, y + h * 0.80, x + w * 0.41, y + h * 0.58];
+      case 'LR': return [x + w * 0.86, y + h * 0.80, x + w * 0.59, y + h * 0.58];
+      case 'B': return [x + w * 0.30, y + h * 0.85, x + w * 0.70, y + h * 0.85];
+      default: return [x, y, x, y];
+    }
+  }
+
+  function drawGlyph(ctx, value, x, y, w=BASE_CELL_W, h=BASE_CELL_H, ink='#111'){
+    const pattern = patternFromValue(value);
+    ctx.save();
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = Math.max(2.2, Math.min(w, h) * 0.17);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.imageSmoothingEnabled = false;
+    SEGMENTS.forEach((seg, idx) => {
+      if(pattern[idx] !== '1') return;
+      const [x0, y0, x1, y1] = segmentLine(x, y, w, h, seg);
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
+  function drawLineAvoidingRects(ctx, x0, x1, y, blockedRects){
+    let segments = [{ x0, x1 }];
+    for(const blocked of blockedRects){
+      if(y < blocked.y || y > blocked.y + blocked.h) continue;
+      const next = [];
+      for(const segment of segments){
+        const bx0 = Math.max(segment.x0, blocked.x);
+        const bx1 = Math.min(segment.x1, blocked.x + blocked.w);
+        if(bx0 <= segment.x0 && bx1 >= segment.x1){
+          continue;
+        }
+        if(bx0 > segment.x0) next.push({ x0:segment.x0, x1:bx0 });
+        if(bx1 < segment.x1) next.push({ x0:bx1, x1:segment.x1 });
+      }
+      segments = next;
+    }
+    for(const segment of segments){
+      if(segment.x1 - segment.x0 < 2) continue;
+      ctx.beginPath();
+      ctx.moveTo(segment.x0, y);
+      ctx.lineTo(segment.x1, y);
+      ctx.stroke();
+    }
+  }
+
+  function fitCenteredText(ctx, text, x, y, maxWidth, weight, size, color, family='system-ui, sans-serif'){
+    let fontSize = size;
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    do{
+      ctx.font = `${weight} ${fontSize}px ${family}`;
+      if(ctx.measureText(text).width <= maxWidth || fontSize <= 12) break;
+      fontSize -= 1;
+    }while(true);
+    ctx.fillText(text, x, y);
+  }
+
+  function footerLines(mode, theme){
+    if(mode === MODE_ALPHABET){
+      return theme === THEME_TERMINAL
+        ? ['READABLE WITH GLYPH TABLE  |  NO PASSWORD REQUIRED', 'Alphanumeric input is readable with the glyph table.']
+        : ['GLYPH ALPHABET  |  NO PASSWORD REQUIRED', 'Alphanumeric input is readable with the glyph table.'];
+    }
+    return theme === THEME_TERMINAL
+      ? ['ENCRYPTED 6SEG DATA  |  PASSWORD REQUIRED', 'Japanese input is encrypted data. Password required.']
+      : ['SCREENSHOT / PNG READABLE  |  PASSWORD REQUIRED', 'The visible 6SEG glyphs contain encrypted data. Without the password, this page is only a page.'];
+  }
+
+  function drawDocument(values, meta={}, exportable=true, wrappedPayload=null){
+    const layout = layoutForValues(values.length);
+    glyphCanvas.width = CANVAS_W;
+    glyphCanvas.height = layout.height;
+
+    const ctx = gctx;
+    const theme = meta.theme || THEME_MANUSCRIPT;
+    const mode = meta.mode || MODE_ENCRYPT;
+    const palette = paletteFor(theme);
+    ctx.clearRect(0,0,CANVAS_W,layout.height);
+    drawBackground(ctx, layout, palette);
+
+    withGlow(ctx, palette, () => {
+      ctx.strokeStyle = palette.border;
+      ctx.lineWidth = 4;
+      ctx.strokeRect(32, 32, CANVAS_W - 64, layout.height - 64);
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(45, 45, CANVAS_W - 90, layout.height - 90);
+    });
+
+    fitCenteredText(ctx, meta.title || defaultTitleFor(mode, theme), CANVAS_W/2, 82, 690, '800', 34, palette.ink, 'system-ui, sans-serif');
+    fitCenteredText(ctx, meta.note || defaultNote(), CANVAS_W/2, 112, 640, '500', 17, palette.ink, 'system-ui, sans-serif');
+
+    ctx.strokeStyle = palette.grid;
+    ctx.lineWidth = 1;
+    for(let r=0;r<=layout.rows;r++){
+      const y = BASE_TOP + r*BASE_CELL_H;
+      drawLineAvoidingRects(ctx, BASE_LEFT, BASE_LEFT + GRID_COLS*BASE_CELL_W, y, layout.markerSafeRects);
+    }
+
+    for(let i=0;i<values.length;i++){
+      const cell = layout.cells[i];
+      withGlow(ctx, palette, () => drawGlyph(ctx, values[i], cell.x, cell.y, cell.w, cell.h, palette.ink));
+    }
+
+    for(let i=values.length;i<layout.cells.length;i++){
+      const cell = layout.cells[i];
+      if(i % 11 !== 0) continue;
+      ctx.save();
+      ctx.globalAlpha = theme === THEME_TERMINAL ? .08 : .10;
+      drawGlyph(ctx, 0, cell.x, cell.y, cell.w, cell.h, palette.ink);
+      ctx.restore();
+    }
+
+    for(const marker of layout.markerRects){
+      drawFinder(ctx, marker.x, marker.y, marker.w, palette);
+    }
+
+    const [footerMain, footerSub] = footerLines(mode, theme);
+    fitCenteredText(ctx, footerMain, CANVAS_W/2, layout.height - 72, 720, '700', 13, palette.footer, 'system-ui, sans-serif');
+    fitCenteredText(ctx, footerSub, CANVAS_W/2, layout.height - 52, 820, '400', 11, palette.footer, 'system-ui, sans-serif');
+
+    if(exportable){
+      const pngDataUrl = glyphCanvas.toDataURL('image/png');
+      lastDataUrl = wrappedPayload ? embedPayloadInPngDataUrl(pngDataUrl, wrappedPayload) : pngDataUrl;
+      $('downloadPng').href = lastDataUrl;
+      setDownloadReady(true);
+    }else{
+      lastDataUrl = '';
+      $('downloadPng').href = '#';
+      setDownloadReady(false);
+    }
+    return layout;
+  }
+
+  function drawEmpty(){
+    const sample = encodeGlyphAlphabet(DEFAULT_PREVIEW_TEXT);
+    drawDocument(sample.values, {
+      title:'GLYPH CYPHER',
+      note:DEFAULT_PREVIEW_TEXT,
+      mode:MODE_ALPHABET,
+      theme:currentTheme()
+    }, false);
+  }
+
+  function sampleSegment(imageData, imgW, imgH, x, y, w, h, seg){
+    const [x0, y0, x1, y1] = segmentLine(x, y, w, h, seg);
+    const steps = 26;
+    let dark = 0;
+    let total = 0;
+    const radius = Math.max(1, Math.round(Math.min(w, h) * 0.08));
+
+    for(let i=0;i<=steps;i++){
+      const t = i / steps;
+      const sx = x0 + (x1 - x0) * t;
+      const sy = y0 + (y1 - y0) * t;
+      for(let dx=-radius; dx<=radius; dx+=2){
+        for(let dy=-radius; dy<=radius; dy+=2){
+          const px = Math.round(sx + dx);
+          const py = Math.round(sy + dy);
+          if(px < 0 || py < 0 || px >= imgW || py >= imgH) continue;
+          const off = (py * imgW + px) * 4;
+          const brightness = (imageData.data[off] + imageData.data[off+1] + imageData.data[off+2]) / 3;
+          if(brightness < 150) dark++;
+          total++;
+        }
+      }
+    }
+    return total > 0 && dark / total > 0.18;
+  }
+
+  function longestRun(flags){
+    let bestStart = 0;
+    let bestEnd = -1;
+    let start = -1;
+    for(let i=0;i<=flags.length;i++){
+      if(i < flags.length && flags[i]){
+        if(start < 0) start = i;
+      }else if(start >= 0){
+        if(i - start > bestEnd - bestStart + 1){
+          bestStart = start;
+          bestEnd = i - 1;
+        }
+        start = -1;
+      }
+    }
+    return { start:bestStart, end:bestEnd, length:bestEnd - bestStart + 1 };
+  }
+
+  function locateCanvasBounds(imageData, W, H){
+    const data = imageData.data;
+    const stride = Math.max(1, Math.floor(Math.max(W, H) / 1400));
+    const cols = Math.ceil(W / stride);
+    const rows = Math.ceil(H / stride);
+    const colCounts = new Uint16Array(cols);
+    const rowCounts = new Uint16Array(rows);
+
+    for(let y=0, by=0; y<H; y+=stride, by++){
+      for(let x=0, bx=0; x<W; x+=stride, bx++){
+        const off = (y * W + x) * 4;
+        const r = data[off];
+        const g = data[off+1];
+        const b = data[off+2];
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const avg = (r + g + b) / 3;
+        if(avg > 178 && max - min < 58){
+          colCounts[bx]++;
+          rowCounts[by]++;
+        }
+      }
+    }
+
+    const maxCol = Math.max(...colCounts);
+    const maxRow = Math.max(...rowCounts);
+    if(!maxCol || !maxRow) return { left:0, top:0, right:W, bottom:H };
+
+    const colFlags = Array.from(colCounts, n => n >= maxCol * 0.22);
+    const rowFlags = Array.from(rowCounts, n => n >= maxRow * 0.22);
+    const colRun = longestRun(colFlags);
+    const rowRun = longestRun(rowFlags);
+
+    if(colRun.length < cols * 0.25 || rowRun.length < rows * 0.25){
+      return { left:0, top:0, right:W, bottom:H };
+    }
+
+    const left = Math.max(0, colRun.start * stride - 2);
+    const right = Math.min(W, (colRun.end + 1) * stride + 2);
+    const top = Math.max(0, rowRun.start * stride - 2);
+    const bottom = Math.min(H, (rowRun.end + 1) * stride + 2);
+
+    return { left, top, right, bottom };
+  }
+
+  function decodeGlyphImageToPayloadBytes(sourceCanvas, useSafeLayout=true){
+    const ctx = sourceCanvas.getContext('2d', { willReadFrequently:true });
+    const W = sourceCanvas.width;
+    const H = sourceCanvas.height;
+    const img = ctx.getImageData(0,0,W,H);
+    const bounds = locateCanvasBounds(img, W, H);
+    const detectedW = bounds.right - bounds.left;
+    const detectedH = bounds.bottom - bounds.top;
+    const scale = detectedW / CANVAS_W;
+    const left = bounds.left + BASE_LEFT * scale;
+    const top = bounds.top + BASE_TOP * scale;
+    const cellW = BASE_CELL_W * scale;
+    const cellH = BASE_CELL_H * scale;
+    const rows = Math.round((detectedH / scale - BASE_TOP - BASE_BOTTOM) / BASE_CELL_H);
+    if(rows < 1 || rows > 10000){
+      throw new Error('画像サイズを判定できませんでした。生成画像全体を読み込んでください。');
+    }
+
+    const values = [];
+    if(useSafeLayout){
+      const layout = layoutForRows(rows);
+      for(const cell of layout.cells){
+        const x = bounds.left + cell.x * scale;
+        const y = bounds.top + cell.y * scale;
+        let v = 0;
+        for(let i=0;i<SEGMENTS.length;i++){
+          const bit = sampleSegment(img, W, H, x, y, cell.w * scale, cell.h * scale, SEGMENTS[i]) ? 1 : 0;
+          v = (v << 1) | bit;
+        }
+        values.push(v);
+      }
+    }else{
+      for(let r=0;r<rows;r++){
+        for(let c=0;c<GRID_COLS;c++){
+          const x = left + c*cellW;
+          const y = top + r*cellH;
+          let v = 0;
+          for(let i=0;i<SEGMENTS.length;i++){
+            const bit = sampleSegment(img, W, H, x, y, cellW, cellH, SEGMENTS[i]) ? 1 : 0;
+            v = (v << 1) | bit;
+          }
+          values.push(v);
+        }
+      }
+    }
+    return sixToBytes(values);
+  }
+
+  async function decodeFromImageElement(img, password){
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth || img.videoWidth || img.width;
+    c.height = img.naturalHeight || img.videoHeight || img.height;
+    const ctx = c.getContext('2d', { willReadFrequently:true });
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    const first = decodeGlyphImageToPayloadBytes(c, true);
+    try{
+      return await decodeWrappedPayload(first, password);
+    }catch(e){
+      const legacy = decodeGlyphImageToPayloadBytes(c, false);
+      return decodeWrappedPayload(legacy, password);
+    }
+  }
+
+  async function makeGlyph(){
+    const text = $('plainText').value;
+    const password = $('makePassword').value;
+    const mode = currentMode();
+    const theme = currentTheme();
+    if(!text.trim()){
+      setStatus($('makeStatus'), '本文を入力してください。', 'err');
+      return;
+    }
+    if(mode === MODE_ENCRYPT && !password){
+      setStatus($('makeStatus'), 'パスワードを入力してください。', 'err');
+      return;
+    }
+    try{
+      if(mode === MODE_ALPHABET){
+        setStatus($('makeStatus'), 'GLYPH ALPHABETを組み立てています...');
+        const encoded = encodeGlyphAlphabet(text);
+        const metadata = makeAlphabetMetadata(encoded);
+        const wrapped = wrapPayload(enc.encode(JSON.stringify(metadata)));
+        const layout = drawDocument(encoded.values, {
+          title:$('titleText').value.trim(),
+          note:$('noteText').value.trim(),
+          mode,
+          theme
+        }, true, wrapped);
+        setStatus($('makeStatus'), `生成しました。\nmode: GLYPH ALPHABET\nglyph: ${encoded.values.length} glyphs / ${layout.rows} rows\n内部表現: ${formatAlphabetTokens(encoded.tokens)}\nPNG読み取りはパスワード不要です。`, 'ok');
+      }else{
+        setStatus($('makeStatus'), '暗号化しています...');
+        const payload = await encryptText(text, password);
+        const wrapped = wrapPayload(payload);
+        const values = bytesToSix(wrapped);
+        const layout = drawDocument(values, {
+          title:$('titleText').value.trim(),
+          note:$('noteText').value.trim(),
+          mode,
+          theme
+        }, true, wrapped);
+        setStatus($('makeStatus'), `生成しました。\nmode: ENCRYPT MODE\n暗号データ: ${payload.length} bytes\nglyph: ${values.length} glyphs / ${layout.rows} rows\nPNG保存またはスクリーンショットから復号できます。`, 'ok');
+      }
+    }catch(e){
+      console.error(e);
+      setStatus($('makeStatus'), e.message || String(e), 'err');
+    }
+  }
+
+  async function decodeSelectedFile(){
+    const file = $('imageFile').files && $('imageFile').files[0];
+    const password = $('readPassword').value;
+    if(!file){
+      setStatus($('readStatus'), '画像ファイルを選んでください。', 'err');
+      return;
+    }
+    try{
+      setStatus($('readStatus'), '画像を読み取っています...');
+      if(file.type === 'image/png' || /\.png$/i.test(file.name || '')){
+        const embedded = extractEmbeddedPayloadFromPng(new Uint8Array(await file.arrayBuffer()));
+        if(embedded){
+          const result = await decodeWrappedPayload(embedded, password);
+          $('resultText').textContent = result.text;
+          setStatus($('readStatus'), `${result.status}\nPNG内のメタデータから読み取りました。`, 'ok');
+          return;
+        }
+      }
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = async () => {
+        try{
+          const result = await decodeFromImageElement(img, password);
+          $('resultText').textContent = result.text;
+          setStatus($('readStatus'), '復号できました。', 'ok');
+        }catch(e){
+          console.error(e);
+          setStatus($('readStatus'), e.message || String(e), 'err');
+        }finally{
+          URL.revokeObjectURL(url);
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        setStatus($('readStatus'), '画像を開けませんでした。', 'err');
+      };
+      img.src = url;
+    }catch(e){
+      console.error(e);
+      setStatus($('readStatus'), e.message || String(e), 'err');
+    }
+  }
+
+  async function startCamera(){
+    try{
+      if(videoStream){
+        videoStream.getTracks().forEach(t=>t.stop());
+        videoStream = null;
+        $('video').style.display = 'none';
+        $('captureBtn').disabled = true;
+        $('cameraBtn').textContent = 'カメラ起動';
+        return;
+      }
+      videoStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' }, audio:false });
+      const video = $('video');
+      video.srcObject = videoStream;
+      await video.play();
+      video.style.display = 'block';
+      $('captureBtn').disabled = false;
+      $('cameraBtn').textContent = 'カメラ停止';
+      setStatus($('readStatus'), 'カメラを起動しました。画像全体を正面から大きく写してください。', 'warn');
+    }catch(e){
+      console.error(e);
+      setStatus($('readStatus'), 'カメラを起動できませんでした。ブラウザの権限を確認してください。', 'err');
+    }
+  }
+
+  async function captureAndDecode(){
+    const password = $('readPassword').value;
+    const video = $('video');
+    if(!videoStream || !video.videoWidth){
+      setStatus($('readStatus'), 'カメラが起動していません。', 'err');
+      return;
+    }
+    try{
+      setStatus($('readStatus'), '撮影画像を読み取っています...');
+      const c = document.createElement('canvas');
+      c.width = video.videoWidth;
+      c.height = video.videoHeight;
+      const ctx = c.getContext('2d', { willReadFrequently:true });
+      ctx.drawImage(video, 0, 0);
+      const rawBytes = decodeGlyphImageToPayloadBytes(c);
+      const result = await decodeWrappedPayload(rawBytes, password);
+      $('resultText').textContent = result.text;
+      setStatus($('readStatus'), '復号できました。', 'ok');
+    }catch(e){
+      console.error(e);
+      setStatus($('readStatus'), `${e.message || String(e)}\n\nカメラ読み取りは実験的です。まずPNG保存した画像から試してください。`, 'err');
+    }
+  }
+
+  function printCanvas(){
+    if(!lastDataUrl){
+      return;
+    }
+    const w = window.open('', '_blank');
+    if(!w){
+      return;
+    }
+    w.document.write(`<!doctype html><html><head><title>GLYPH CYPHER PRINT</title><style>body{margin:0;background:white;text-align:center}img{width:100%;max-width:1080px;height:auto} @media print{img{width:100%;max-width:none}}</style></head><body><img src="${lastDataUrl}" onload="setTimeout(()=>print(),250)"></body></html>`);
+    w.document.close();
+  }
+
+  function setupTabs(){
+    const make = $('tabMake');
+    const read = $('tabRead');
+    make.addEventListener('click', () => {
+      make.classList.add('active');
+      read.classList.remove('active');
+      make.setAttribute('aria-selected','true');
+      read.setAttribute('aria-selected','false');
+      $('makePanel').classList.add('active');
+      $('readPanel').classList.remove('active');
+    });
+    read.addEventListener('click', () => {
+      read.classList.add('active');
+      make.classList.remove('active');
+      read.setAttribute('aria-selected','true');
+      make.setAttribute('aria-selected','false');
+      $('readPanel').classList.add('active');
+      $('makePanel').classList.remove('active');
+    });
+  }
+
+  function demo(){
+    if(currentMode() === MODE_ALPHABET){
+      $('plainText').value = 'Hello NASA project.';
+      $('makePassword').value = '';
+      $('titleText').value = defaultTitleFor(MODE_ALPHABET, currentTheme());
+      $('noteText').value = defaultNote();
+    }else{
+      $('plainText').value = 'これはGLYPH CYPHERのテストです。\n\n読めない文字に見えますが、パスワードを入れると元の文章に戻ります。\n\n紙、画面、スクリーンショットの間を移動できる秘密の手紙です。';
+      $('makePassword').value = 'test';
+      $('titleText').value = defaultTitleFor(MODE_ENCRYPT, currentTheme());
+      $('noteText').value = 'password: test';
+    }
+    makeGlyph();
+  }
+
+  document.querySelectorAll('input[name="makeMode"]').forEach((input) => input.addEventListener('change', applyModeUi));
+  $('themeSelect').addEventListener('change', () => {
+    applyModeUi();
+    drawEmpty();
+  });
+  $('makeBtn').addEventListener('click', makeGlyph);
+  $('demoBtn').addEventListener('click', demo);
+  $('decodeFileBtn').addEventListener('click', decodeSelectedFile);
+  $('cameraBtn').addEventListener('click', startCamera);
+  $('captureBtn').addEventListener('click', captureAndDecode);
+  $('printBtn').addEventListener('click', printCanvas);
+  $('copyResultBtn').addEventListener('click', async () => {
+    const t = $('resultText').textContent || '';
+    if(!t){
+      return;
+    }
+    await navigator.clipboard.writeText(t);
+    setStatus($('readStatus'), '復号結果をコピーしました。', 'ok');
+  });
+  $('clearResultBtn').addEventListener('click', () => {
+    $('resultText').textContent = '';
+    setStatus($('readStatus'), '復号結果を消去しました。');
+  });
+
+  setupTabs();
+  applyModeUi();
+  drawEmpty();
+
+  window.__glyphCypherDebug = {
+    encodeGlyphAlphabet,
+    decodeGlyphAlphabetValues,
+    ALPHABET_TABLE,
+    layoutForValues,
+    base64ToBytes,
+    extractEmbeddedPayloadFromPng,
+    decodeWrappedPayload,
+    wrapPayload,
+    unwrapPayload,
+    bytesToSix,
+    sixToBytes
+  };
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  }
+})();
+</script>
+</body>
+</html>

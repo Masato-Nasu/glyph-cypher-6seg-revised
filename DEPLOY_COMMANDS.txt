@@ -1,0 +1,6 @@
+# Cloudflare Pages deploy commands
+# Project name: glyph-cypher-6seg-revised
+
+Expand-Archive "$env:USERPROFILE\Downloads\glyph-cypher-6seg-revised.zip" -DestinationPath "$env:USERPROFILE\Desktop" -Force
+cd "$env:USERPROFILE\Desktop\glyph-cypher-6seg-revised"
+npx wrangler pages deploy . --project-name glyph-cypher-6seg-revised
