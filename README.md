@@ -9,6 +9,12 @@
 
 GLYPH ALPHABET MODEは対応表で人間が解読できます。64種類の6SEG制限を超えないために、`SYM NEXT` 制御グリフを使います。`SYM NEXT` の直後のグリフは通常文字ではなく拡張記号として読みます。ENCRYPT MODEの日本語入力は暗号化データであり、パスワード必須です。
 
+- 直接1グリフの基本記号: `|`, `/`, `_`, `-`, `.`, `,`, `:`, `;`, `!`, `?`, `'`, `"`, `@`, `#`, `&`, `+`, `=`, `*`, `%`, `$`, `(`, `)`, `~`
+- `SYM NEXT` 拡張記号: <, >, [, ], {, }, backslash, ^, backtick
+- 改行とタブは、GLYPH ALPHABET MODEでは自動的に半角spaceとして扱います。復元時も改行ではなくspaceになります。
+- WebやSNSから貼り付けたスマート引用符（‘ ’ “ ”）や長いダッシュは、GLYPH ALPHABET MODEでASCIIの `'`, `"`, `-` に正規化します。
+- Twitter/XなどのSNSはPNGメタデータを削除・再圧縮することがあります。GLYPH ALPHABET MODEはメタデータが無い画像でも、Manuscript/Terminalの見えるglyphからの復元を試します。ただし強い圧縮やリサイズ後は元のPNGが最も安定します。
+
 ## 修正内容
 
 - ENCRYPT MODE / GLYPH ALPHABET MODEの2本立てに整理

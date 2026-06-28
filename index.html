@@ -386,6 +386,7 @@
       <details>
         <summary>読めないとき</summary>
         <p>ENCRYPT MODEはパスワードが同じか確認してください。GLYPH ALPHABETはパスワード不要ですが、元テキスト復元にはこのアプリでPNG保存した画像が最も安定します。</p>
+        <p>Twitter/XなどのSNSはPNGメタデータを削除・再圧縮することがあります。GLYPH ALPHABETは見えるglyphから復元を試しますが、強い圧縮では元のPNGを使ってください。</p>
       </details>
     </div>
   </section>
@@ -425,10 +426,11 @@
 
   const CANVAS_W = 1080;
   const GRID_COLS = 36;
-  const BASE_LEFT = 58;
-  const BASE_TOP = 162;
   const BASE_CELL_W = 25;
   const BASE_CELL_H = 34;
+  const BASE_LEFT = Math.round((CANVAS_W - GRID_COLS * BASE_CELL_W) / 2);
+  const LEGACY_BASE_LEFT = 58;
+  const BASE_TOP = 162;
   const BASE_BOTTOM = 106;
   const MAX_ROWS = 360;
   const MARKER_SIZE = 54;
@@ -457,6 +459,13 @@
     ['<','A'], ['>','B'], ['[','C'], [']','D'], ['{','E'], ['}','F'], ['\\','G'], ['^','H'], ['`','I']
   ]);
   const EXTENDED_TOKEN_TO_SYMBOL = new Map(Array.from(EXTENDED_SYMBOL_TO_TOKEN, ([symbol, token]) => [token, symbol]));
+  const GLYPH_ALPHABET_NORMALIZE = new Map([
+    ['\u2018', "'"], ['\u2019', "'"], ['\u201A', "'"], ['\u201B', "'"], ['\u2032', "'"],
+    ['\u201C', '"'], ['\u201D', '"'], ['\u201E', '"'], ['\u201F', '"'], ['\u2033', '"'],
+    ['\u2010', '-'], ['\u2011', '-'], ['\u2012', '-'], ['\u2013', '-'], ['\u2014', '-'],
+    ['\u00A0', ' '], ['\u2007', ' '], ['\u202F', ' '],
+    ['\u200B', ''], ['\u200C', ''], ['\u200D', ''], ['\uFEFF', '']
+  ]);
 
   let lastDataUrl = '';
   let videoStream = null;
@@ -799,6 +808,14 @@
     return /^[A-Z]$/.test(ch);
   }
 
+  function isAsciiDigit(ch){
+    return /^[0-9]$/.test(ch);
+  }
+
+  function normalizeGlyphAlphabetChar(ch){
+    return GLYPH_ALPHABET_NORMALIZE.has(ch) ? GLYPH_ALPHABET_NORMALIZE.get(ch) : ch;
+  }
+
   function uppercaseRunLength(text, index){
     let n = 0;
     for(let i=index;i<text.length;i++){
@@ -821,7 +838,18 @@
     const tokens = [];
     const values = [];
     for(let i=0;i<text.length;i++){
-      const ch = text[i];
+      const rawCh = text[i];
+      if(rawCh === '\n' || rawCh === '\r' || rawCh === '\t'){
+        if(rawCh === '\r' && text[i+1] === '\n'){
+          i++;
+        }
+        pushAlphabetToken(tokens, values, 'space');
+        continue;
+      }
+      const ch = normalizeGlyphAlphabetChar(rawCh);
+      if(ch === ''){
+        continue;
+      }
       if(isAsciiLetter(ch)){
         if(isUpperLetter(ch)){
           const run = uppercaseRunLength(text, i);
@@ -839,6 +867,8 @@
         }else{
           pushAlphabetToken(tokens, values, ch.toUpperCase());
         }
+      }else if(isAsciiDigit(ch)){
+        pushAlphabetToken(tokens, values, ch);
       }else if(ch === ' '){
         pushAlphabetToken(tokens, values, 'space');
       }else if(EXTENDED_SYMBOL_TO_TOKEN.has(ch)){
@@ -846,10 +876,8 @@
         pushAlphabetToken(tokens, values, EXTENDED_SYMBOL_TO_TOKEN.get(ch));
       }else if(ALPHABET_SYMBOLS.has(ch)){
         pushAlphabetToken(tokens, values, ch);
-      }else if(ch === '\n' || ch === '\r' || ch === '\t'){
-        throw new Error('GLYPH ALPHABET MODEでは改行やタブは使えません。spaceで区切ってください。');
       }else{
-        throw new Error(`GLYPH ALPHABET MODEで使えない文字です: ${ch}`);
+        throw new Error(`GLYPH ALPHABET MODEは英数字とWeb用ASCII記号専用です。日本語を使う場合はENCRYPT MODEを選んでください。使えない文字: ${ch}`);
       }
     }
     return { tokens, values };
@@ -1019,19 +1047,19 @@
     ];
   }
 
-  function layoutForRows(rows){
+  function layoutForRows(rows, baseLeft=BASE_LEFT){
     const height = BASE_TOP + rows * BASE_CELL_H + BASE_BOTTOM;
     const markerRects = markerRectsForHeight(height);
     const markerSafeRects = markerRects.map((r) => expandRect(r, MARKER_SAFE));
     const headerRect = rect(32, 32, CANVAS_W - 64, BASE_TOP - 48);
-    const bodyRect = rect(BASE_LEFT, BASE_TOP, GRID_COLS * BASE_CELL_W, rows * BASE_CELL_H);
-    const footerRect = rect(BASE_LEFT, height - 96, GRID_COLS * BASE_CELL_W, 56);
+    const bodyRect = rect(baseLeft, BASE_TOP, GRID_COLS * BASE_CELL_W, rows * BASE_CELL_H);
+    const footerRect = rect(baseLeft, height - 96, GRID_COLS * BASE_CELL_W, 56);
     const forbidden = markerSafeRects.concat([footerRect]);
     const cells = [];
 
     for(let r=0;r<rows;r++){
       for(let c=0;c<GRID_COLS;c++){
-        const cell = rect(BASE_LEFT + c * BASE_CELL_W, BASE_TOP + r * BASE_CELL_H, BASE_CELL_W, BASE_CELL_H);
+        const cell = rect(baseLeft + c * BASE_CELL_W, BASE_TOP + r * BASE_CELL_H, BASE_CELL_W, BASE_CELL_H);
         if(forbidden.some((zone) => intersects(cell, zone))) continue;
         cells.push({ ...cell, row:r, col:c });
       }
@@ -1242,7 +1270,7 @@
     ctx.lineWidth = 1;
     for(let r=0;r<=layout.rows;r++){
       const y = BASE_TOP + r*BASE_CELL_H;
-      drawLineAvoidingRects(ctx, BASE_LEFT, BASE_LEFT + GRID_COLS*BASE_CELL_W, y, layout.markerSafeRects);
+      drawLineAvoidingRects(ctx, layout.bodyRect.x, layout.bodyRect.x + layout.bodyRect.w, y, layout.markerSafeRects);
     }
 
     for(let i=0;i<values.length;i++){
@@ -1290,12 +1318,49 @@
     }, false);
   }
 
-  function sampleSegment(imageData, imgW, imgH, x, y, w, h, seg){
+  function detectVisualInkMode(imageData, imgW, imgH){
+    const data = imageData.data;
+    const stride = Math.max(1, Math.floor(Math.max(imgW, imgH) / 700));
+    let sampled = 0;
+    let dark = 0;
+    let lightNeutral = 0;
+    let greenInk = 0;
+
+    for(let y=0; y<imgH; y+=stride){
+      for(let x=0; x<imgW; x+=stride){
+        const off = (y * imgW + x) * 4;
+        const r = data[off];
+        const g = data[off+1];
+        const b = data[off+2];
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const avg = (r + g + b) / 3;
+        if(avg < 50) dark++;
+        if(avg > 178 && max - min < 58) lightNeutral++;
+        if(g > 55 && g - Math.max(r, b) > 18) greenInk++;
+        sampled++;
+      }
+    }
+
+    return greenInk > lightNeutral && dark > sampled * 0.2 ? 'light-on-dark' : 'dark-on-light';
+  }
+
+  function isVisualInkPixel(r, g, b, inkMode){
+    const avg = (r + g + b) / 3;
+    if(inkMode === 'light-on-dark'){
+      return g > 70 && g - Math.max(r, b) > 22;
+    }
+    return avg < 150;
+  }
+
+  function sampleSegment(imageData, imgW, imgH, x, y, w, h, seg, inkMode='dark-on-light'){
     const [x0, y0, x1, y1] = segmentLine(x, y, w, h, seg);
     const steps = 26;
-    let dark = 0;
+    let ink = 0;
     let total = 0;
-    const radius = Math.max(1, Math.round(Math.min(w, h) * 0.08));
+    const radiusScale = inkMode === 'light-on-dark' ? 0.06 : 0.08;
+    const hitRatio = inkMode === 'light-on-dark' ? 0.22 : 0.18;
+    const radius = Math.max(1, Math.round(Math.min(w, h) * radiusScale));
 
     for(let i=0;i<=steps;i++){
       const t = i / steps;
@@ -1307,13 +1372,14 @@
           const py = Math.round(sy + dy);
           if(px < 0 || py < 0 || px >= imgW || py >= imgH) continue;
           const off = (py * imgW + px) * 4;
-          const brightness = (imageData.data[off] + imageData.data[off+1] + imageData.data[off+2]) / 3;
-          if(brightness < 150) dark++;
+          if(isVisualInkPixel(imageData.data[off], imageData.data[off+1], imageData.data[off+2], inkMode)){
+            ink++;
+          }
           total++;
         }
       }
     }
-    return total > 0 && dark / total > 0.18;
+    return total > 0 && ink / total > hitRatio;
   }
 
   function longestRun(flags){
@@ -1379,16 +1445,17 @@
     return { left, top, right, bottom };
   }
 
-  function decodeGlyphImageToPayloadBytes(sourceCanvas, useSafeLayout=true){
+  function decodeGlyphImageToValues(sourceCanvas, useSafeLayout=true, baseLeft=BASE_LEFT){
     const ctx = sourceCanvas.getContext('2d', { willReadFrequently:true });
     const W = sourceCanvas.width;
     const H = sourceCanvas.height;
     const img = ctx.getImageData(0,0,W,H);
+    const inkMode = detectVisualInkMode(img, W, H);
     const bounds = locateCanvasBounds(img, W, H);
     const detectedW = bounds.right - bounds.left;
     const detectedH = bounds.bottom - bounds.top;
     const scale = detectedW / CANVAS_W;
-    const left = bounds.left + BASE_LEFT * scale;
+    const left = bounds.left + baseLeft * scale;
     const top = bounds.top + BASE_TOP * scale;
     const cellW = BASE_CELL_W * scale;
     const cellH = BASE_CELL_H * scale;
@@ -1399,13 +1466,13 @@
 
     const values = [];
     if(useSafeLayout){
-      const layout = layoutForRows(rows);
+      const layout = layoutForRows(rows, baseLeft);
       for(const cell of layout.cells){
         const x = bounds.left + cell.x * scale;
         const y = bounds.top + cell.y * scale;
         let v = 0;
         for(let i=0;i<SEGMENTS.length;i++){
-          const bit = sampleSegment(img, W, H, x, y, cell.w * scale, cell.h * scale, SEGMENTS[i]) ? 1 : 0;
+          const bit = sampleSegment(img, W, H, x, y, cell.w * scale, cell.h * scale, SEGMENTS[i], inkMode) ? 1 : 0;
           v = (v << 1) | bit;
         }
         values.push(v);
@@ -1417,14 +1484,96 @@
           const y = top + r*cellH;
           let v = 0;
           for(let i=0;i<SEGMENTS.length;i++){
-            const bit = sampleSegment(img, W, H, x, y, cellW, cellH, SEGMENTS[i]) ? 1 : 0;
+            const bit = sampleSegment(img, W, H, x, y, cellW, cellH, SEGMENTS[i], inkMode) ? 1 : 0;
             v = (v << 1) | bit;
           }
           values.push(v);
         }
       }
     }
-    return sixToBytes(values);
+    return { values, rows };
+  }
+
+  function decodeGlyphImageToPayloadBytes(sourceCanvas, useSafeLayout=true, baseLeft=BASE_LEFT){
+    return sixToBytes(decodeGlyphImageToValues(sourceCanvas, useSafeLayout, baseLeft).values);
+  }
+
+  function decodeGlyphImageToAlphabetText(sourceCanvas, useSafeLayout=true, baseLeft=BASE_LEFT){
+    const { values } = decodeGlyphImageToValues(sourceCanvas, useSafeLayout, baseLeft);
+    let end = values.length;
+    const spaceValue = ALPHABET_GLYPH_BY_TOKEN.get('space');
+    while(end > 0 && values[end - 1] === spaceValue){
+      end--;
+    }
+    if(end <= 0){
+      throw new Error('Could not read visible GLYPH ALPHABET glyphs.');
+    }
+    return {
+      mode:MODE_ALPHABET,
+      text:decodeGlyphAlphabetValues(values.slice(0, end), 'alphabet-v2'),
+      status:'GLYPH ALPHABET was restored from visible glyphs.'
+    };
+  }
+
+  function shouldTryAlphabetVisualFallback(errors, password){
+    if(password){
+      return false;
+    }
+    return !errors.some((error) => {
+      const message = error && error.message ? error.message : String(error);
+      return /ENCRYPT MODE|FSC1|password/i.test(message);
+    });
+  }
+
+  async function decodeFromCanvas(sourceCanvas, password){
+    const errors = [];
+    try{
+      const first = decodeGlyphImageToPayloadBytes(sourceCanvas, true);
+      return await decodeWrappedPayload(first, password);
+    }catch(e){
+      errors.push(e);
+    }
+    try{
+      const legacySafe = decodeGlyphImageToPayloadBytes(sourceCanvas, true, LEGACY_BASE_LEFT);
+      return await decodeWrappedPayload(legacySafe, password);
+    }catch(e){
+      errors.push(e);
+    }
+    try{
+      const legacy = decodeGlyphImageToPayloadBytes(sourceCanvas, false);
+      return await decodeWrappedPayload(legacy, password);
+    }catch(e){
+      errors.push(e);
+    }
+    try{
+      const legacyLeft = decodeGlyphImageToPayloadBytes(sourceCanvas, false, LEGACY_BASE_LEFT);
+      return await decodeWrappedPayload(legacyLeft, password);
+    }catch(e){
+      errors.push(e);
+    }
+    if(shouldTryAlphabetVisualFallback(errors, password)){
+      try{
+        return decodeGlyphImageToAlphabetText(sourceCanvas, true);
+      }catch(e){
+        errors.push(e);
+      }
+      try{
+        return decodeGlyphImageToAlphabetText(sourceCanvas, true, LEGACY_BASE_LEFT);
+      }catch(e){
+        errors.push(e);
+      }
+      try{
+        return decodeGlyphImageToAlphabetText(sourceCanvas, false);
+      }catch(e){
+        errors.push(e);
+      }
+      try{
+        return decodeGlyphImageToAlphabetText(sourceCanvas, false, LEGACY_BASE_LEFT);
+      }catch(e){
+        errors.push(e);
+      }
+    }
+    throw errors[0] || new Error('Could not read image.');
   }
 
   async function decodeFromImageElement(img, password){
@@ -1433,13 +1582,7 @@
     c.height = img.naturalHeight || img.videoHeight || img.height;
     const ctx = c.getContext('2d', { willReadFrequently:true });
     ctx.drawImage(img, 0, 0, c.width, c.height);
-    const first = decodeGlyphImageToPayloadBytes(c, true);
-    try{
-      return await decodeWrappedPayload(first, password);
-    }catch(e){
-      const legacy = decodeGlyphImageToPayloadBytes(c, false);
-      return decodeWrappedPayload(legacy, password);
-    }
+    return decodeFromCanvas(c, password);
   }
 
   async function makeGlyph(){
@@ -1511,7 +1654,7 @@
         try{
           const result = await decodeFromImageElement(img, password);
           $('resultText').textContent = result.text;
-          setStatus($('readStatus'), '復号できました。', 'ok');
+          setStatus($('readStatus'), result.status || '復号できました。', 'ok');
         }catch(e){
           console.error(e);
           setStatus($('readStatus'), e.message || String(e), 'err');
@@ -1568,10 +1711,9 @@
       c.height = video.videoHeight;
       const ctx = c.getContext('2d', { willReadFrequently:true });
       ctx.drawImage(video, 0, 0);
-      const rawBytes = decodeGlyphImageToPayloadBytes(c);
-      const result = await decodeWrappedPayload(rawBytes, password);
+      const result = await decodeFromCanvas(c, password);
       $('resultText').textContent = result.text;
-      setStatus($('readStatus'), '復号できました。', 'ok');
+      setStatus($('readStatus'), result.status || '復号できました。', 'ok');
     }catch(e){
       console.error(e);
       setStatus($('readStatus'), `${e.message || String(e)}\n\nカメラ読み取りは実験的です。まずPNG保存した画像から試してください。`, 'err');
